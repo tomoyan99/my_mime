@@ -263,7 +263,9 @@ export class MIME {
         const head_arr = Object.entries(this.header).map(([_, f_value]) => f_value.getFieldStr()).join("\n");
         const body_arr = Object.entries(this.body).map(([_, f_value]) => f_value.getFieldStr()).join("\n");
         const attach_arr = this.attachment.map((attachment) => Object.entries(attachment).map(([_, f_value]) => f_value.getFieldStr()).join("\n")).join(`\n${boundary}\n`);
-        return `${head_arr}\n${boundary}\n${body_arr}\n${boundary}\n${attach_arr}`;
+        let mail_source = `${head_arr}\n${boundary}\n${body_arr}`;
+        mail_source += attach_arr.length > 0 ? `\n${boundary}\n${attach_arr}` : '';
+        return mail_source;
     }
 }
 

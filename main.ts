@@ -10,8 +10,8 @@ async function mimeMail() {
     const m = new MIME(mail_info);
 
     // 添付ファイルを追加
-    await m.attachContent("../main.py");
-    await m.attachContent("../File.eml");
+    await m.attachContent("./text/Hello.txt");
+    await m.attachContent("./text/main_test.ts");
 
     // 完成したメールソースを取得して保存
     const str = m.getMailSource();

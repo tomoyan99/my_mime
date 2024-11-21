@@ -1,11 +1,11 @@
 import {Buffer} from "node:buffer";
-import { v4 as uuidv4 } from "npm:uuid";
+import {v4 as uuidv4} from "npm:uuid";
 import dayjs from "npm:dayjs";
 import utc from "npm:dayjs/plugin/utc.js";
 import customParseFormat from "npm:dayjs/plugin/customParseFormat.js";
 import timezone from "npm:dayjs/plugin/timezone.js"
-import { mime } from "https://deno.land/x/mimetypes@v1.0.0/mod.ts";
-import { basename } from "https://deno.land/std@0.224.0/path/mod.ts";
+import {mime} from "https://deno.land/x/mimetypes@v1.0.0/mod.ts";
+import {basename} from "https://deno.land/std@0.224.0/path/mod.ts";
 import {Charset} from "../../types/Charset.ts";
 
 // dayjsにtimezone, utc, customParseFormatプラグインを拡張
@@ -14,7 +14,7 @@ dayjs.extend(timezone);
 dayjs.extend(customParseFormat);
 
 // Fieldクラス: メールヘッダーやボディのフィールドを保持する汎用クラス
-class Field<T extends string = string>{
+export class Field<T extends string = string>{
     protected name: string; // フィールド名
     protected value:T; // フィールド値
 
@@ -37,7 +37,7 @@ class Field<T extends string = string>{
 
     // フィールドを文字列として取得（base64エンコーディング対応）
     public getFieldStr(){
-        const flag = this.name.length === 0;
+        const flag = this.name.length === 0; // フィールド名が存在しない(=メッセージ)時はbase64エンコードする
         const value_converted = this.convMultibyte(this.value,flag);
         const regex = new RegExp(`.{1,76}`, 'g'); // 76文字ごとに分割
         const value_sliced76 = value_converted.match(regex)?.join('\n') || value_converted;
@@ -53,6 +53,7 @@ class Field<T extends string = string>{
 
     // マルチバイト文字をbase64エンコードする
     protected convMultibyte(str: string,flag:boolean=false): string {
+        // マルチバイト文字が混じっているかの検出
         const is_multibyte = str.length !== Buffer.byteLength(str, "utf-8");
         if (is_multibyte || flag) {
             return Buffer.from(str, "utf-8").toString("base64");
@@ -60,10 +61,10 @@ class Field<T extends string = string>{
             return str;
         }
     }
-};
+}
 
 // MultiFieldクラス: 複数のフィールドを持つフィールドを定義
-class MultiField<T extends Record<string, Field>, U extends string = string> extends Field<U> {
+export class MultiField<T extends Record<string, Field>, U extends string = string> extends Field<U> {
     parameter: T; // 追加のパラメータ
 
     constructor(name: string, value: U, param: T) {
@@ -93,42 +94,58 @@ class MultiField<T extends Record<string, Field>, U extends string = string> ext
 }
 
 // ヘッダ情報（Content-Type）の構造
-type ContentTypeHead = {
+export type ContentTypeHead = {
     boundary: Field
 };
+// MIME-Typeのヘッダ用一覧
+export type MimeTypeHead =
+    | 'multipart/alternative'
+    | 'multipart/appledouble'
+    | 'multipart/byteranges'
+    | 'multipart/digest'
+    | 'multipart/form-data'
+    | 'multipart/header-set'
+    | 'multipart/mixed'
+    | 'multipart/multilingual'
+    | 'multipart/parallel'
+    | 'multipart/related'
+    | 'multipart/report'
+    | 'multipart/vnd.bint.med-plus'
+    | 'multipart/voice-message'
+    | 'multipart/x-mixed-replace';
 
 // MIMEヘッダの構造
-type MimeHeadProps = {
+export type MimeHeadProps = {
     message_id: Field,
     from: Field,
     to: Field,
     subject: Field,
     date: Field,
     mime_version: Field,
-    content_type: MultiField<ContentTypeHead>,
+    content_type: MultiField<ContentTypeHead,MimeTypeHead>,
 };
 
 
 // ボディのContent-Type構造
-type ContentTypeBody = {
+export type ContentTypeBody = {
     charset: Field<Charset>,
 };
 
 // MIMEボディの構造
-type MimeBodyProps = {
+export type MimeBodyProps = {
     content_type: MultiField<ContentTypeBody>,
     content_transfer_encoding: Field,
     message: Field
 };
 
 // 添付ファイルのContent-Disposition情報
-type ContentDisposition = {
+export type ContentDisposition = {
     filename: Field,
     size?: Field,
 };
 
 // MIME添付ファイルの構造
-type MimeAttachProps = {
+export type MimeAttachProps = {
     content_type: Field,
     content_transfer_encoding: Field,
     content_disposition: MultiField<ContentDisposition, "attachment" | "inline">,
@@ -144,10 +161,10 @@ export type MailInfo = {
 }
 
 // メールのヘッダ、ボディ、添付ファイルを管理するクラス
-export class Mime {
-    private header: MimeHeadProps;
-    private body: MimeBodyProps;
-    private attachment: MimeAttachProps[];
+export class MIME {
+    protected readonly header: MimeHeadProps;
+    protected readonly body: MimeBodyProps;
+    protected readonly attachment: MimeAttachProps[];
 
     // コンストラクタ
     constructor(mail_info: MailInfo) {
@@ -206,7 +223,7 @@ export class Mime {
     }
 
     // ヘッダ、ボディ、添付ファイルを取得
-    public getArgments() {
+    public getArguments() {
         return { header: this.header, body: this.body, attachment: this.attachment };
     }
 
@@ -216,21 +233,19 @@ export class Mime {
         const uuid2 = uuidv4();
         const uuid1_no_bar = uuid1.split("-").join("").toUpperCase();
         const uuid2_no_bar = uuid2.split("-").join("").toUpperCase();
-        const message_id = `<${uuid1_no_bar}@${uuid2_no_bar.substring(0, 31)}.SMAIL.COM>`;
-        return message_id;
+        return `<${uuid1_no_bar}@${uuid2_no_bar.substring(0, 31)}.SMAIL.COM>`;
     }
 
     // 日付を生成
     private createTimeStamp(): string {
         const format = "ddd, DD MMM YYYY HH:mm:ss Z";
-        const formattedDate = dayjs().utc().format(format);
-        return formattedDate;
+        return dayjs().utc().format(format);
     }
 
     // バウンダリを生成
     private createBoundary() {
         const message_id = this.header?.message_id.getFieldValue().value;
-        let boundary = "";
+        let boundary;
         if (message_id) {
             const uuid = message_id.split("@")[0];
             boundary = `========${uuid}========`;
@@ -245,9 +260,9 @@ export class Mime {
     // 完成したメールのソースを取得
     public getMailSource() {
         const boundary = "--" + this.header.content_type.parameter.boundary.getFieldValue().value;
-        const head_arr = Object.entries(this.header).map(([f_name, f_value]) => f_value.getFieldStr()).join("\n");
-        const body_arr = Object.entries(this.body).map(([f_name, f_value]) => f_value.getFieldStr()).join("\n");
-        const attach_arr = this.attachment.map((attachment) => Object.entries(attachment).map(([f_name, f_value]) => f_value.getFieldStr()).join("\n")).join(`\n${boundary}\n`);
+        const head_arr = Object.entries(this.header).map(([_, f_value]) => f_value.getFieldStr()).join("\n");
+        const body_arr = Object.entries(this.body).map(([_, f_value]) => f_value.getFieldStr()).join("\n");
+        const attach_arr = this.attachment.map((attachment) => Object.entries(attachment).map(([_, f_value]) => f_value.getFieldStr()).join("\n")).join(`\n${boundary}\n`);
         return `${head_arr}\n${boundary}\n${body_arr}\n${boundary}\n${attach_arr}`;
     }
 }

@@ -1,11 +1,12 @@
 import {MIME,MailInfo} from "./src/mime/MIME.ts";
+import { MIMEParser } from "./src/mime/MIMEParser.ts";
 // メールを作成して保存する関数
 async function mimeMail() {
     const mail_info: MailInfo = {
         from: "T122063 <t122063@ed.sus.ac.jp>",
         to: "T122063 <t122063@ed.sus.ac.jp>",
         subject: "こんにちは",
-        // message:"あああああああああああああああああああああああああああ"
+        message:"あああああああああああああああああああああああああああ"
     };
     const m = new MIME(mail_info);
 
@@ -17,6 +18,15 @@ async function mimeMail() {
     const str = m.getMailSource();
     // console.log(str); // デバッグ用
     await Deno.writeTextFile("./mime_entity.eml", str); // ファイルに保存
+
+    // console.log(MIMEParser.parseByStr(str));
+    const parsed_m = MIMEParser.parseByStr(str);
+
+    // 完成したメールソースを取得して保存
+    const str2 = parsed_m.getMailSource();
+    // console.log(str); // デバッグ用
+    await Deno.writeTextFile("./mime_entity2.eml", str2); // ファイルに保存
+
 }
 
 // mimeMail関数を実行

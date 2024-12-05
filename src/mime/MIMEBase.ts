@@ -1,4 +1,10 @@
-import { Buffer } from "node:buffer";
+import {Buffer} from "node:buffer";
+import {IMIMEHeaderProps} from "./MIMEHeader.ts";
+import {IMIMEBodyProps} from "./MIMEBody.ts";
+import {IMIMEAttachProps} from "./MIMEAttach.ts";
+import {Charset} from "../../types/Charset.ts";
+
+export type MIMEProps = IMIMEHeaderProps|IMIMEBodyProps|IMIMEAttachProps;
 
 export type HeaderFieldName =
     | "Message-ID"
@@ -35,6 +41,32 @@ export type TsHeaderFieldName =
     | "message" // これは本文を示す独自のtype
     | string;
 
+// MIMEヘッダーフィールド名をTypeScript用のプロパティ名に変換するマッピング関数
+export function mimeHeaderToProp(fieldName:HeaderFieldName):TsHeaderFieldName{
+    const table : Readonly<Record<HeaderFieldName,TsHeaderFieldName>> = {
+        "Message-ID": "message_id",
+        "From": "from",
+        "To": "to",
+        "Subject": "subject",
+        "Date": "date",
+        "MIME-Version": "mime_version",
+        "Content-Type": "content_type",
+        "Content-Transfer-Encoding": "content_transfer_encoding",
+        "Content-Disposition": "content_disposition",
+        "filename": "filename",
+        "size": "size",
+        "charset": "charset",
+        "boundary": "boundary",
+        "Message":"message"
+    }
+    if (fieldName in table) {
+        return table[fieldName];
+    }else{
+        console.log(fieldName);
+        throw new Error("Missing fieldName");
+    }
+}
+
 // Fieldクラス: メールヘッダーやボディのフィールドを保持する汎用クラス
 export class Field<T extends string = string>{
     protected name: HeaderFieldName; // フィールド名
@@ -58,25 +90,34 @@ export class Field<T extends string = string>{
     }
 
     // フィールドを文字列として取得（base64エンコーディング対応）
-    public getFieldStr(){
-        const flag = this.name === "Message"; // フィールド名が存在しない(=メッセージ)時はbase64エンコードする
-        const value_converted = this.convMultibyte(this.value,flag);
-        const regex = new RegExp(`.{1,76}`, 'g'); // 76文字ごとに分割
-        const value_sliced76 = value_converted.match(regex)?.join('\n') || value_converted;
+    public getFieldStr():string{
+        const flag:boolean = this.name === "Message"; // フィールド名が存在しない(=メッセージ)時はbase64エンコードする
+        // valueをbase64にエンコード
+        const value_converted:string = this.encodeMultibyte64(this.value,flag);
+        // 正規表現
+        const regex:RegExp = new RegExp(`.{1,76}`, 'g');
+        // valueを76文字ずつ改行で分割
+        const value_sliced76:string = value_converted.match(regex)?.join('\n') || value_converted;
 
-        let str = "";
+        let str:string = "";
+        // メッセージ本文の場合はフィールド名を付けない
         if (this.name === "Message") {
             str = `\n${value_sliced76}\n`;
         } else{
-            str = `${this.name}: ${value_sliced76}`;
+            // 行が80を超えたら改行+タブ
+            if (`${this.name}: ${value_sliced76}`.length > 80){
+                str = `${this.name}: \n\t${value_sliced76}`;
+            }else{
+                str = `${this.name}: ${value_sliced76}`;
+            }
         }
         return str;
     }
 
     // マルチバイト文字をbase64エンコードする
-    protected convMultibyte(str: string,flag:boolean=false): string {
+    protected encodeMultibyte64(str: string,flag:boolean=false): string {
         // マルチバイト文字が混じっているかの検出
-        const is_multibyte = str.length !== Buffer.byteLength(str, "utf-8");
+        const is_multibyte:boolean = str.length !== Buffer.byteLength(str, "utf-8");
         if (is_multibyte || flag) {
             return Buffer.from(str, "utf-8").toString("base64");
         } else {
@@ -89,23 +130,26 @@ export class Field<T extends string = string>{
 export class MultiField<T extends Record<string, Field>, U extends string = string> extends Field<U> {
     parameter: T; // 追加のパラメータ
 
-    constructor(name:HeaderFieldName, value: U, param: T) {
+    constructor(name:HeaderFieldName, value: U, param?: T) {
         super(name, value);
-        this.parameter = param;
+        this.parameter = param??<T>{};
     }
 
     // フィールドを文字列として取得（パラメータを追加して返す）
     public override getFieldStr(): string {
-        const value_converted = this.convMultibyte(this.value);
+        // valueをbase64にエンコード
+        const value_converted = this.encodeMultibyte64(this.value);
+        // 正規表現
         const regex = new RegExp(`.{1,76}`, 'g');
+        // valueを76文字ずつ改行で分割
         const value_sliced76 = value_converted.match(regex)?.join('\n') || value_converted;
-
+        // ヘッダーフィールドの作成
         let str = `${this.name}: ${value_sliced76}`;
-
-        // パラメータを追加
+        // ヘッダーフィールドにパラメータを追加
         Object.entries(this.parameter).forEach(([p_name, p_value]) => {
             str += ";";
             const add_str = `${p_name}="${p_value.getFieldValue().value}"`
+            //
             if (str.length + add_str.length > 76) {
                 str += `\n\t${add_str}`
             } else {
@@ -116,10 +160,26 @@ export class MultiField<T extends Record<string, Field>, U extends string = stri
     }
 }
 
+// MIMEオブジェクトのプロパティをKeyとValueに分割
+export type MIMEPropsKey<T extends MIMEProps> = keyof T;
+export type MIMEPropsValue<T extends MIMEProps> = T[keyof T];
 
+// MIMEヘッダーフィールドのContent-Type
+export type ContentType = {
+    boundary?: Field,
+    charset?: Field<Charset>,
+};
 
-export interface IMIMEBase {
-    // プロパティの設定
-    setProperties:(props:any)=>void;
+// MIMEの核となる抽象クラス
+export abstract class MIMEBase<T extends Record<MIMEPropsKey<MIMEProps>,MIMEPropsValue<MIMEProps>>> {
+    public setProperties(props: T): void {
+        type MIMETuple = [keyof T, T[keyof T]];
+        type MIMERecord = Record<keyof T, T[keyof T]>;
+        const entries = <MIMETuple[]>Object.entries(props);
+        for (const [key, value] of entries) {
+            if (key in this) {
+                (<MIMERecord><unknown>this)[key] = value;
+            }
+        }
+    }
 }
-

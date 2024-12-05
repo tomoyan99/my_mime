@@ -4,34 +4,13 @@ import utc from "npm:dayjs/plugin/utc.js";
 import customParseFormat from "npm:dayjs/plugin/customParseFormat.js";
 import timezone from "npm:dayjs/plugin/timezone.js"
 import {MailInfo} from "./MIME.ts";
-import {IMIMEBase,Field,MultiField} from "./MIMEBase.ts";
+import {ContentType, Field, MIMEBase, MultiField} from "./MIMEBase.ts";
+import {MimeTypeHead} from "../../types/MimeType.d.ts";
 
 // dayjsにtimezone, utc, customParseFormatプラグインを拡張
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(customParseFormat);
-
-// MIME-Typeのヘッダ用一覧
-type MimeTypeHead =
-    | 'multipart/alternative'
-    | 'multipart/appledouble'
-    | 'multipart/byteranges'
-    | 'multipart/digest'
-    | 'multipart/form-data'
-    | 'multipart/header-set'
-    | 'multipart/mixed'
-    | 'multipart/multilingual'
-    | 'multipart/parallel'
-    | 'multipart/related'
-    | 'multipart/report'
-    | 'multipart/vnd.bint.med-plus'
-    | 'multipart/voice-message'
-    | 'multipart/x-mixed-replace';
-
-// ヘッダ情報（Content-Type）の構造
-type ContentTypeHead = {
-    boundary: Field
-};
 
 export interface IMIMEHeaderProps {
     message_id: Field;
@@ -40,19 +19,20 @@ export interface IMIMEHeaderProps {
     subject: Field;
     date: Field;
     mime_version: Field;
-    content_type: MultiField<ContentTypeHead,MimeTypeHead>;
+    content_type: MultiField<ContentType,MimeTypeHead>;
 }
 
-export class MIMEHeader implements IMIMEHeaderProps,IMIMEBase{
-    public message_id: Field;
-    public from: Field;
-    public to: Field;
-    public subject: Field;
-    public date: Field;
-    public mime_version: Field;
-    public content_type: MultiField<ContentTypeHead,MimeTypeHead>;
+export class MIMEHeader extends MIMEBase<IMIMEHeaderProps> implements IMIMEHeaderProps {
+    public message_id;
+    public from;
+    public to;
+    public subject;
+    public date;
+    public mime_version;
+    public content_type;
 
     constructor(mail_info: MailInfo) {
+        super();
         this.message_id = new Field(
             "Message-ID",
             this.createMessageID() // メッセージIDの生成
@@ -109,13 +89,4 @@ export class MIMEHeader implements IMIMEHeaderProps,IMIMEBase{
         }
         return boundary;
     }
-    // プロパティの設定
-    public setProperties(props:IMIMEHeaderProps){
-        Object.entries(props).forEach(([key, value]) => {
-            if (key in this){
-                this[key] = value;
-            }
-        });
-    }
-
 }

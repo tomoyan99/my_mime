@@ -1,3 +1,4 @@
+// MIME-Type一覧
 // mime-dbのObject.keysから取ってきた
 export type MimeType =
   'application/1d-interleaved-parityfec'
@@ -2446,3 +2447,26 @@ export type MimeType =
 | 'x-conference/x-cooltalk'
 | 'x-shader/x-fragment'
 | 'x-shader/x-vertex';
+
+
+// MIME-Typeのヘッダ用一覧
+export type MimeTypeHead =
+    | 'multipart/alternative'
+    | 'multipart/appledouble'
+    | 'multipart/byteranges'
+    | 'multipart/digest'
+    | 'multipart/encrypted'
+    | 'multipart/form-data'
+    | 'multipart/header-set'
+    | 'multipart/mixed'
+    | 'multipart/multilingual'
+    | 'multipart/parallel'
+    | 'multipart/related'
+    | 'multipart/report'
+    | 'multipart/signed'
+    | 'multipart/vnd.bint.med-plus'
+    | 'multipart/voice-message'
+    | 'multipart/x-mixed-replace';
+
+// ヘッダ用を除いたMIME-Type
+export type MIMETypeBody = Exclude<MimeType,MimeTypeHead>;

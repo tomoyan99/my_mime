@@ -19,8 +19,7 @@ async function mimeMail() {
     // console.log(str); // デバッグ用
     await Deno.writeTextFile("./mime_entity.eml", str); // ファイルに保存
 
-    // console.log(MIMEParser.parseByStr(str));
-    const parsed_m = MIMEParser.parseByStr(str);
+    const parsed_m = await MIMEParser.parseByStr(str);
 
     // 完成したメールソースを取得して保存
     const str2 = parsed_m.getMailSource();

@@ -34,11 +34,11 @@ export class MIME {
             const path = arg;
             try {
                 const stats = await Deno.stat(path); // ファイルの情報を取得
-                const mime_type = <MIMETypeBody>mime.getType(path) || "application/octet-stream"; // MIMEタイプを取得
+                const mimeType = <MIMETypeBody>mime.getType(path) || "application/octet-stream"; // MIMEタイプを取得
                 const filename = basename(path); // ファイル名を取得
                 const content = await Deno.readTextFile(path); // ファイル内容を読み込む
 
-                const attachment = new MIMEAttach(mime_type,filename,`${stats.size}`,content);
+                const attachment = new MIMEAttach(mimeType,filename,`${stats.size}`,content);
                 this.attachments.push(attachment); // 添付ファイルをリストに追加
             } catch (error) {
                 const filename = basename(path); // ファイル名を取得
@@ -52,29 +52,27 @@ export class MIME {
             this.attachments.push(arg);
         }
     }
+
+    // 添付ファイルを削除
+    public removeContent(index:number){
+        if (index === -1) index = this.attachments.length-1;
+        const attachment:MIMEAttach = this.attachments[index];
+        this.attachments.splice(index,1);
+        return attachment;
+    }
+
     // 完成したメールのソースを取得
     public getMailSource() {
-        // 汎用的なフィールド文字列生成関数
-        function generateFieldStrArray(data:MIMEProps): string[] {
-            const result: string[] = [];
-            for (const [_, fieldValue] of Object.entries(data)) {
-                if ("getFieldStr" in fieldValue) {
-                    result.push(fieldValue.getFieldStr());
-                }
-            }
-            return result;
-        }
-
         // Boundaryを取得
-        const boundary = "--" + this.header.content_type.parameter.boundary.getFieldValue().value;
+        const boundary = "--" + this.header.content_type.parameter.boundary?.getFieldValue().value;
 
         // ヘッダー部分の生成
-        const headStr = generateFieldStrArray(this.header).join("\n");
+        const headStr = this.generateFieldStrArray(this.header).join("\n");
         // ボディ部分の生成
-        const bodyStr = generateFieldStrArray(this.body).join("\n");
+        const bodyStr = this.generateFieldStrArray(this.body).join("\n");
         // 添付ファイル部分の生成
         const attachStr = this.attachments
-            .map((attachment) => generateFieldStrArray(attachment).join("\n"))
+            .map((attachment) => this.generateFieldStrArray(attachment).join("\n"))
             .join(`\n${boundary}\n`);
         // メールソースの結合
         let mailSource = `${headStr}\n${boundary}\n${bodyStr}`;
@@ -83,6 +81,16 @@ export class MIME {
         }
 
         return mailSource;
+    }
+    // 汎用的なフィールド文字列生成関数
+    protected generateFieldStrArray(data:MIMEProps): string[] {
+        const result: string[] = [];
+        for (const [_, fieldValue] of Object.entries(data)) {
+            if ("getFieldStr" in fieldValue) {
+                result.push(fieldValue.getFieldStr());
+            }
+        }
+        return result;
     }
 
 }

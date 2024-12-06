@@ -1,11 +1,6 @@
-import {ContentType, Field, MIMEBase, MultiField} from "./MIMEBase.ts";
+import {MIMEBase} from "./MIMEBase.ts";
 import {MIMETypeBody} from "../../types/MimeType.d.ts";
-
-// 添付ファイルのContent-Disposition情報
-type ContentDisposition = {
-    filename: Field,
-    size: Field,
-};
+import {ContentDisposition, ContentType, Field, MultiField} from "./MIMEInfo.ts";
 
 export interface IMIMEAttachProps {
     content_type: MultiField<ContentType,MIMETypeBody>;
@@ -19,11 +14,17 @@ export class MIMEAttach extends MIMEBase<IMIMEAttachProps> implements IMIMEAttac
     public content_transfer_encoding;
     public content_disposition;
     public message;
-    constructor(mime_type:MIMETypeBody,filename:string,size:string,content:string) {
+    constructor(mimeType:MIMETypeBody,filename:string,size:string,content:string) {
         super();
         this.content_type = new MultiField(
             "Content-Type",
-            mime_type
+            mimeType,
+            {
+                name:new Field(
+                    "name",
+                    filename,
+                )
+            }
         );
         this.content_disposition = new MultiField(
             "Content-Disposition",
@@ -36,7 +37,7 @@ export class MIMEAttach extends MIMEBase<IMIMEAttachProps> implements IMIMEAttac
                 size: new Field(
                     "size",
                     size
-                )
+                ),
             }
         );
         this.content_transfer_encoding = new Field(

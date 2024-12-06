@@ -4,8 +4,9 @@ import utc from "npm:dayjs/plugin/utc.js";
 import customParseFormat from "npm:dayjs/plugin/customParseFormat.js";
 import timezone from "npm:dayjs/plugin/timezone.js"
 import {MailInfo} from "./MIME.ts";
-import {ContentType, Field, MIMEBase, MultiField} from "./MIMEBase.ts";
+import {MIMEBase} from "./MIMEBase.ts";
 import {MimeTypeHead} from "../../types/MimeType.d.ts";
+import {ContentType, Field, MultiField} from "./MIMEInfo.ts";
 
 // dayjsにtimezone, utc, customParseFormatプラグインを拡張
 dayjs.extend(utc);
@@ -23,13 +24,13 @@ export interface IMIMEHeaderProps {
 }
 
 export class MIMEHeader extends MIMEBase<IMIMEHeaderProps> implements IMIMEHeaderProps {
-    public message_id;
-    public from;
-    public to;
-    public subject;
-    public date;
-    public mime_version;
-    public content_type;
+    public message_id:Field;
+    public from:Field;
+    public to:Field;
+    public subject:Field;
+    public date:Field;
+    public mime_version:Field;
+    public content_type: MultiField<ContentType,MimeTypeHead>;
 
     constructor(mail_info: MailInfo) {
         super();

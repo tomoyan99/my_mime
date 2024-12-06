@@ -1,7 +1,7 @@
-import {Field, MIMEBase, MultiField} from "./MIMEBase.ts";
-import {MIMEAttach} from "./MIMEAttach.ts";
+import {MIMEBase} from "./MIMEBase.ts";
 import {Charset} from "../../types/Charset.ts";
 import {MIMETypeBody} from "../../types/MimeType.d.ts";
+import {Field, MultiField} from "./MIMEInfo.ts";
 
 // ボディのContent-Type構造
 type ContentTypeBody = {

@@ -1,7 +1,7 @@
 import {MailInfo} from "../mime/MIME.ts";
 import {MIMEHeader} from "../mime/MIMEHeader.ts";
 import {ContentType, Field, MultiField} from "../mime/MIMEInfo.ts";
-import {HashAlgorithm, SMIMEContentType, SMIMEType} from "../../types/MimeType.d.ts";
+import {HashAlgorithm, SMIMEContentType, SMIMEType} from "../types/MimeType.d.ts";
 
 export class SMIMEHeader extends MIMEHeader {
     constructor(mailInfo: MailInfo) {

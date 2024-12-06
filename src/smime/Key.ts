@@ -1,6 +1,6 @@
 import {Buffer} from "node:buffer";
-import {base64ToUint8Array, uint8ArrayToBase64} from "../../utils/uint8Base64.ts";
-import {UHashAlgorithm} from "../../types/MimeType.d.ts";
+import {base64ToUint8Array, uint8ArrayToBase64} from "../utils/uint8Base64.ts";
+import {UHashAlgorithm} from "../types/MimeType.d.ts";
 
 export class Key{
     private pem: string;

@@ -1,5 +1,5 @@
 import {MIMEBase} from "./MIMEBase.ts";
-import {MIMETypeBody} from "../../types/MimeType.d.ts";
+import {MIMETypeBody} from "../types/MimeType.d.ts";
 import {ContentDisposition, ContentType, Field, MultiField} from "./MIMEInfo.ts";
 
 export interface IMIMEAttachProps {

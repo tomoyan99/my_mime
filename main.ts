@@ -1,5 +1,5 @@
 import {MailInfo, MIME} from "./src/mime/MIME.ts";
-import {MIMEParser} from "./src/mime/MIMEParser.ts";
+import {MIMEParser} from "./src/parser/MIMEParser.ts";
 import {SMailInfo, SMIME} from "./src/smime/SMIME.ts";
 
 // メールを作成して保存する関数
@@ -39,17 +39,19 @@ async function smimeMail(){
         message:"あああああああああああああああああああああああああああ",
     };
     const smail_info:SMailInfo = {
-        certificatePath:"./publicKey.pem",
         mailInfo:{...mail_info,attachPaths:["text/Hello.txt"]},
         protocol:"application/pkcs7-signature",
         micalg:"sha-256"
     }
     const s = await SMIME.init(smail_info);
+
     await s.sign("./privateKey.pem",smail_info.protocol,smail_info.micalg);
-    console.log(await s.verify(smail_info.certificatePath));
+
+    console.log("署名の検証："+await s.verify("./publicKey.pem"));
+
     await Deno.writeTextFile("./smime_entity.eml",s.getMailSource()); // ファイルに保存
 
-    const parsed_s = await MIMEParser.parseByStr(s.getMailSource());
+    const parsed_s = <SMIME>await MIMEParser.parseByStr(s.getMailSource());
 
     // 完成したメールソースを取得して保存
     const str2 = parsed_s.getMailSource();

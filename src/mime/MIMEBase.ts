@@ -10,7 +10,7 @@ export type MIMEPropsValue<T extends MIMEProps> = T[keyof T];
 
 // MIMEの核となる抽象クラス
 export abstract class MIMEBase<T extends Record<MIMEPropsKey<MIMEProps>,MIMEPropsValue<MIMEProps>>> {
-    public setProperties(props: T): void {
+    public setProperties(props: Partial<T>): void {
         type MIMETuple = [keyof T, T[keyof T]];
         type MIMERecord = Record<keyof T, T[keyof T]>;
         const entries = <MIMETuple[]>Object.entries(props);

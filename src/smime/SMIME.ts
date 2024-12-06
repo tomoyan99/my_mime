@@ -2,13 +2,12 @@ import { Buffer } from "node:buffer";
 import {MailInfo, MIME} from "../mime/MIME.ts";
 import {SMIMEHeader} from "./SMIMEHeader.ts";
 import {MIMEAttach} from "../mime/MIMEAttach.ts";
-import {HashAlgorithm, SMIMEContentType, UHashAlgorithm} from "../../types/MimeType.d.ts";
+import {HashAlgorithm, SMIMEContentType, UHashAlgorithm} from "../types/MimeType.d.ts";
 import { Key } from "./Key.ts";
-import { uint8ArrayToBase64 } from "../../utils/uint8Base64.ts";
+import {base64ToUint8Array, uint8ArrayToBase64} from "../utils/uint8Base64.ts";
 
 export type SMailInfo = {
-    certificatePath : string; // 証明書のパス
-    mailInfo : MailInfo&{attachPaths:string[]},
+    mailInfo : MailInfo&{attachPaths?:string[]},
     protocol:SMIMEContentType,
     micalg:HashAlgorithm
 }
@@ -18,7 +17,7 @@ export class SMIME extends MIME{
     private signature:Uint8Array;
     private signatureStr:string;
 
-    constructor(params:SMailInfo) {
+    private constructor(params:SMailInfo) {
         super(params.mailInfo);
         this.header = new SMIMEHeader(params.mailInfo);
         this.signature = new Uint8Array();
@@ -26,10 +25,16 @@ export class SMIME extends MIME{
     }
     public static async init(params:SMailInfo){
         const instance = new SMIME(params);
-        for (const attachPath of params.mailInfo.attachPaths) {
-            await instance.attachContent(attachPath);
+        if (params.mailInfo.attachPaths){
+            for (const attachPath of params.mailInfo.attachPaths) {
+                await instance.attachContent(attachPath);
+            }
         }
         return instance;
+    }
+    public setSignature(signatureStr64:string){
+        this.signatureStr = signatureStr64;
+        this.signature = base64ToUint8Array(signatureStr64);
     }
     public async sign(myPriKeyPath:string,protocol:SMIMEContentType,micalg:HashAlgorithm){
         // ヘッダーを署名用に変換

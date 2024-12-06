@@ -4,7 +4,7 @@ import {MIMEHeader} from "./MIMEHeader.ts";
 import {MIMEBody} from "./MIMEBody.ts";
 import {MIMEAttach} from "./MIMEAttach.ts";
 import {MIMEProps} from "./MIMEBase.ts";
-import {MIMETypeBody} from "../../types/MimeType.d.ts";
+import {MIMETypeBody} from "../types/MimeType.d.ts";
 
 // メール情報
 export type MailInfo = {

@@ -1,6 +1,6 @@
 import {Buffer} from "node:buffer";
-import {Charset} from "../../types/Charset.ts";
-import {HashAlgorithm, SMIMEType, SMIMEContentType} from "../../types/MimeType.d.ts";
+import {Charset} from "../types/Charset.ts";
+import {HashAlgorithm, SMIMEType, SMIMEContentType} from "../types/MimeType.d.ts";
 import {mime} from "https://deno.land/x/mimetypes@v1.0.0/mod.ts";
 
 export type HeaderFieldName =
@@ -129,7 +129,13 @@ export class Field<T extends string = string>{
         // マルチバイト文字が混じっているかの検出
         const is_multibyte:boolean = str.length !== Buffer.byteLength(str, "utf-8");
         if (is_multibyte || flag) {
-            return Buffer.from(str, "utf-8").toString("base64");
+            const prefix = "base64?";
+            let base64str = prefix+Buffer.from(str, "utf-8").toString("base64");
+            const rem = base64str.length % 4;
+            for (let i = 0; i < rem; i++) {
+                base64str += "=";
+            }
+            return base64str;
         } else {
             return str;
         }

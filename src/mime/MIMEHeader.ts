@@ -5,7 +5,7 @@ import customParseFormat from "npm:dayjs/plugin/customParseFormat.js";
 import timezone from "npm:dayjs/plugin/timezone.js"
 import {MailInfo} from "./MIME.ts";
 import {MIMEBase} from "./MIMEBase.ts";
-import {MimeTypeHead} from "../../types/MimeType.d.ts";
+import {MimeTypeHead} from "../types/MimeType.d.ts";
 import {ContentType, Field, MultiField} from "./MIMEInfo.ts";
 
 // dayjsにtimezone, utc, customParseFormatプラグインを拡張

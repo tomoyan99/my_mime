@@ -2474,10 +2474,6 @@ export type MIMETypeBody = Exclude<MimeType,MimeTypeHead>|SMIMEContentType;
 
 // S/MIMEのSignのMIME-Type
 export type SMIMEContentType = "application/pkcs7-signature" | "application/pkcs7-mime"|"application/cms";
-// S/MIMEのハッシュアルゴリズム
-export type HashAlgorithm = "sha-1" | "sha-224" | "sha-256" | "sha-384" | "sha-512" | "md5";
-// S/MIMEのハッシュアルゴリズムのUPPER CASE
-export type UHashAlgorithm = "SHA-1" | "SHA-224" | "SHA-256" | "SHA-384" | "SHA-512" | "MD5";
 
 // smime-type
 export type SMIMEType = "enveloped-data"|"signed-data"|"certs-only"|"compressed-data"|"authEnveloped-data";

@@ -1,4 +1,4 @@
-import db from "mime-db"
+import db from "npm:mime-db"
 import * as fs from 'node:fs';
 
 function createMimeTypes() {

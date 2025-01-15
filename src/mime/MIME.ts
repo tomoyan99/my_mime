@@ -5,6 +5,7 @@ import {MIMEBody} from "./MIMEBody.ts";
 import {MIMEAttach} from "./MIMEAttach.ts";
 import {MIMEProps} from "./MIMEBase.ts";
 import {MIMETypeBody} from "../types/MimeType.d.ts";
+import * as path from "node:path";
 
 // メール情報
 export type MailInfo = {
@@ -79,9 +80,18 @@ export class MIME {
         if (attachStr.length > 0) {
             mailSource += `\n${boundary}\n${attachStr}`;
         }
-
+        mailSource = mailSource.replace(/(?<!\r)\n/g, '\r\n');
         return mailSource;
     }
+    public getMailSourceJSON(){
+        const mailSource = {
+            header: this.header,
+            body: this.body,
+            attachments: this.attachments
+        }
+        return JSON.stringify(mailSource, null, 2);
+    }
+
     // 汎用的なフィールド文字列生成関数
     protected generateFieldStrArray(data:MIMEProps): string[] {
         const result: string[] = [];
@@ -92,5 +102,14 @@ export class MIME {
         }
         return result;
     }
-
+    public async saveSourceString(filePath:string){
+        const str = this.getMailSource();
+        await Deno.mkdir(path.dirname(filePath),{recursive:true});
+        await Deno.writeTextFile(filePath,str);
+    }
+    public async saveSourceJSON(filePath:string){
+        const json = this.getMailSourceJSON();
+        await Deno.mkdir(path.dirname(filePath),{recursive:true});
+        await Deno.writeTextFile(filePath,json);
+    }
 }

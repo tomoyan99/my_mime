@@ -41,12 +41,29 @@ class HashAlgorithmFormats {
 }
 
 export class Micalg {
-    // 各ハッシュアルゴリズムを静的プロパティとして持つ
-    static sha1 = new HashAlgorithmFormats("sha-1");
-    static sha224 = new HashAlgorithmFormats("sha-224");
-    static sha256 = new HashAlgorithmFormats("sha-256");
-    static sha384 = new HashAlgorithmFormats("sha-384");
-    static sha512 = new HashAlgorithmFormats("sha-512");
-    static md5 = new HashAlgorithmFormats("md5");
-    static unknown = new HashAlgorithmFormats("unknown");
+    private formats: HashAlgorithmFormats;
+
+    constructor(algorithm: HashAlgorithmFormat<"LC_Hyphen">) {
+        this.formats = new HashAlgorithmFormats(algorithm);
+    }
+
+    // 大文字
+    UC(): string {
+        return this.formats.UC();
+    }
+
+    // 小文字
+    LC(): string {
+        return this.formats.LC();
+    }
+
+    // 大文字でハイフン付き
+    UC_Hyphen(): string {
+        return this.formats.UC_Hyphen();
+    }
+
+    // 小文字でハイフン付き
+    LC_Hyphen(): string {
+        return this.formats.LC_Hyphen();
+    }
 }

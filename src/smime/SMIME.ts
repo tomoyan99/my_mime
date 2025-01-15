@@ -1,4 +1,3 @@
-import { Buffer } from "node:buffer";
 import {MailInfo, MIME} from "../mime/MIME.ts";
 import {SMIMEHeader} from "./SMIMEHeader.ts";
 import {MIMEAttach} from "../mime/MIMEAttach.ts";
@@ -44,9 +43,9 @@ export class SMIME extends MIME{
 
         this.signature = signature;
 
-        await this.attachContent(new MIMEAttach(protocol,"smime.p7s",`${signatureSize}`,signatureStr));
+        await this.attachContent(new MIMEAttach(protocol,"smime.p7s",`${signatureSize}`,signature));
     }
-    public async verify(youPubKeyPath:string,algorithm:HashAlgorithmFormat<"UC">){
+    public async verify(youPubKeyPath:string,algorithm:HashAlgorithmFormat<"LC_Hyphen">="sha-256"){
         // 一回署名を取り除いて
         const attachment = this.removeContent(-1);
         // ソースを取得して
@@ -57,10 +56,11 @@ export class SMIME extends MIME{
         await this.attachContent(attachment);
         return isValid;
     }
+
     public async encrypt(recvPubKey:Uint8Array){
         // ヘッダーを暗号化用に変換
         this.header.convEncryption("enveloped-data");
-        const bodySource = this.getMailSource();
+        const source = this.getMailSource();
     }
     private createEncryption(fileContent: string, privateKey:Uint8Array) {
         // メッセージをバイト列に変換

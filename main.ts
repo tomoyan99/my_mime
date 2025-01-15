@@ -44,19 +44,17 @@ async function smimeMail(){
     }
     const s = await SMIME.init(smail_info);
 
-    await s.sign("./privateKey.pem",smail_info.protocol,smail_info.micalg);
-
-    console.log("署名の検証："+await s.verify("./publicKey.pem"));
-
-    await Deno.writeTextFile("./smime_entity.eml",s.getMailSource()); // ファイルに保存
+    await s.sign("./key/myPrivateKey.pem",smail_info.protocol,smail_info.micalg);
+    console.log("署名の検証："+await s.verify("./key/myPrivateKey.pem",smail_info.micalg));
 
     const parsed_s = <SMIME>await MIMEParser.parseByStr(s.getMailSource());
 
     // 完成したメールソースを取得して保存
-    const str2 = parsed_s.getMailSource();
-    await Deno.writeTextFile("./smime_entity2.eml",str2); // ファイルに保存
-    await Deno.writeTextFile("./smime_obj.json",JSON.stringify(s,null, 2)); // ファイルに保存
-    await Deno.writeTextFile("./smime_obj2.json",JSON.stringify(parsed_s,null, 2)); // ファイルに保存
+
+    await s.saveSourceString("./out/smime_before.txt"); // ファイルに保存
+    await parsed_s.saveSourceString("./out/smime_after.txt"); // ファイルに保存
+    await s.saveSourceJSON("./out/smime_before.json"); // ファイルに保存
+    await parsed_s.saveSourceJSON("./out/smime_after.json"); // ファイルに保存
 
 }
 // mimeMail関数を実行

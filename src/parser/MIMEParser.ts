@@ -61,7 +61,6 @@ function parseSegment<T extends MIMEProps>(segment: string[]): T {
         if (fieldValue) {
             // フィールド値がある場合、パラメータを分解
             let [fieldMainValue, ...params] = fieldValue.split(";");
-
             // フィールドメイン値がBase64エンコードのときはutf-8に
             fieldMainValue = decodeBase64(fieldMainValue);
 
@@ -92,7 +91,7 @@ function parseSegment<T extends MIMEProps>(segment: string[]): T {
     // メッセージが存在したときの処理
     if (messageBase64.length > 0) {
         // Base64でエンコードされたメッセージをデコード
-        const messageUtf8 = decodeBase64(messageBase64);
+        const messageUtf8 = decodeBase64(messageBase64,true);
         // 最後にMessageフィールドを追加
         segRecord.push({ name: "Message", value: messageUtf8, params: [] });
     }
@@ -103,6 +102,7 @@ function parseSegment<T extends MIMEProps>(segment: string[]): T {
 export class MIMEParser {
     // MIMEエンティティ文字列を解析する静的メソッド
     public static async parseByStr(mime_entity: string) {
+        mime_entity = mime_entity.replaceAll("\r","");
         // MIMEエンティティ内の改行とタブの組み合わせを削除して整形
         mime_entity = mime_entity.replaceAll(/\n\t/g, "");
 
@@ -150,7 +150,7 @@ export class MIMEParser {
                     mime_type: attachParam.content_type.getFieldValue().value,  // MIMEタイプ
                     filename: attachParam.content_disposition.parameter.filename.getFieldValue().value, // ファイル名
                     size: attachParam.content_disposition.parameter.size.getFieldValue().value,  // ファイルサイズ
-                    content: attachParam.message.getFieldValue().value,  // 添付ファイルのコンテンツ
+                    content: attachParam.message?.getFieldValue().value,  // 添付ファイルのコンテンツ
                 };
                 if (param.mime_type === "application/pkcs7-signature"){
                     s.setSignature(param.content);
@@ -181,7 +181,7 @@ export class MIMEParser {
                     mime_type: attachParam.content_type.getFieldValue().value,  // MIMEタイプ
                     filename: attachParam.content_disposition.parameter.filename.getFieldValue().value, // ファイル名
                     size: attachParam.content_disposition.parameter.size.getFieldValue().value,  // ファイルサイズ
-                    content: attachParam.message.getFieldValue().value,  // 添付ファイルのコンテンツ
+                    content: attachParam.message?.getFieldValue().value ?? "",  // 添付ファイルのコンテンツ
                 };
                 if (param.mime_type === "application/pkcs7-signature"){
                     s.setSignature(param.content);
@@ -210,7 +210,7 @@ export class MIMEParser {
                     mime_type: attachParam.content_type.getFieldValue().value,  // MIMEタイプ
                     filename: attachParam.content_disposition.parameter.filename.getFieldValue().value, // ファイル名
                     size: attachParam.content_disposition.parameter.size.getFieldValue().value,  // ファイルサイズ
-                    content: attachParam.message.getFieldValue().value,  // 添付ファイルのコンテンツ
+                    content: attachParam.message?.getFieldValue().value  ?? "",  // 添付ファイルのコンテンツ
                 };
 
                 // MIMEAttachオブジェクトを生成

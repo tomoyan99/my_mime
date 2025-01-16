@@ -37,8 +37,24 @@ export class MIME {
                 const stats = await Deno.stat(path); // ファイルの情報を取得
                 const mimeType = <MIMETypeBody>mime.getType(path) || "application/octet-stream"; // MIMEタイプを取得
                 const filename = basename(path); // ファイル名を取得
-                const content = await Deno.readTextFile(path); // ファイル内容を読み込む
+                let content = "";
 
+                if (stats.size <= 104857600){
+                    content = await Deno.readTextFile(path); // ファイル内容を読み込む
+                }else{
+                    const file = await Deno.open(path);
+                    const reader = file.readable.getReader();
+                    const decoder = new TextDecoder();
+                    while(true) {
+                        // Process each chunk
+                        const { value, done } = await reader.read();
+                        if (done) break;
+
+                        // チャンク（Uint8Array）を文字列に変換して処理
+                        const chunk = decoder.decode(value, { stream: true });
+                        content += chunk;  // 文字列として加算していく
+                    }
+                }
                 const attachment = new MIMEAttach(mimeType,filename,`${stats.size}`,content);
                 this.attachments.push(attachment); // 添付ファイルをリストに追加
             } catch (error) {

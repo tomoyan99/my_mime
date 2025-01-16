@@ -1,7 +1,8 @@
 import {Buffer} from "node:buffer";
 import {Charset} from "../types/Charset.ts";
-import {HashAlgorithm, SMIMEType, SMIMEContentType} from "../types/MimeType.d.ts";
+import {SMIMEType, SMIMEContentType} from "../types/MimeType.d.ts";
 import {mime} from "https://deno.land/x/mimetypes@v1.0.0/mod.ts";
+import {HashAlgorithmFormat} from "../smime/Micalg.ts";
 
 export type HeaderFieldName =
     | "Message-ID"
@@ -129,12 +130,21 @@ export class Field<T extends string = string>{
         // マルチバイト文字が混じっているかの検出
         const is_multibyte:boolean = str.length !== Buffer.byteLength(str, "utf-8");
         if (is_multibyte || flag) {
-            const prefix = "base64?";
-            let base64str = prefix+Buffer.from(str, "utf-8").toString("base64");
-            const rem = base64str.length % 4;
-            for (let i = 0; i < rem; i++) {
-                base64str += "=";
+            let prefix = "";
+            let suffix = "";
+            if(!flag){
+                prefix = "=?utf-8?b?";
+                suffix = "?=";
             }
+            const chunkSize = 1024 * 1024; // 100MBごと
+            let base64str = "";
+            // strをチャンクごとにBase64に変換
+            for (let i = 0; i < str.length; i += chunkSize) {
+                const chunk = str.slice(i, i + chunkSize);
+                const encoded = Buffer.from(chunk, "utf-8").toString("base64");
+                base64str += encoded;
+            }
+            base64str = prefix+base64str+suffix;
             return base64str;
         } else {
             return str;
@@ -181,7 +191,7 @@ export type ContentType = {
     boundary?: Field,
     charset?: Field<Charset>,
     protocol?:Field<SMIMEContentType>,
-    micalg?:Field<HashAlgorithm>,
+    micalg?:Field<HashAlgorithmFormat<"LC_Hyphen">>,
     name?:Field,
     smime_type?:Field<SMIMEType>
 };

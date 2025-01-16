@@ -1,9 +1,13 @@
 {
   "tasks": {
-    "dev": "deno run -A --watch main.ts"
+    "dev": "deno run -A --watch main.ts",
+    "start": "deno run -A  main.ts",
+    "start:bench": "deno bench -A main.ts"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1",
-    "@types/node": "npm:@types/node@^22.10.6"
-  }
+    "@types/node": "npm:@types/node@^22.10.7",
+    "buffer": "npm:buffer@^6.0.3"
+  },
+  "nodeModulesDir": "auto"
 }

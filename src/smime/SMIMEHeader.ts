@@ -10,7 +10,6 @@ export class SMIMEHeader extends MIMEHeader {
     }
     public convSignature(protocol:SMIMEContentType,micalg:HashAlgorithmFormat<"LC_Hyphen">) {
         if (this.content_type.parameter.boundary) {
-
             this.content_type = new MultiField("Content-Type","multipart/signed",{
                 boundary:this.content_type.parameter.boundary,
                 protocol:new Field("protocol",protocol),
